@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VALORANT DataForge</title>
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="visuals.css">
+</head>
+<body>
+<div id="app">
+  <header>
+    <div class="brand">Valorant<span>Game Info!</span></div>
+    <nav>
+      <button class="active" onclick="show('explorer',this)">Explorer</button>
+      <button onclick="show('builder',this)">Loadout Builder</button>
+    </nav>
+  </header>
+  <main id="explorer">
+    <div class="hero">
+      <div>
+        <div class="eyebrow">VALORANT API EXPLORER</div>
+        <h1>Explore the game.<br><span style="color:#ff4655">Build your loadout.</span></h1>
+        <p>A focused data explorer for Agents, Roles, Weapons, Weapon Skins and Maps — then turn your favorites into a personal loadout.</p>
+        <button class="cta" onclick="document.getElementById('data').scrollIntoView({behavior:'smooth'})">Explore endpoints ↓</button>
+      </div>
+      <div class="preview">
+        <div class="top"><span>PLAYER LOADOUT</span><span>VALORANT DATA</span></div>
+        <div class="agent" id="agentPreview">
+          <img id="agentBackground" class="agent-background" alt="" hidden>
+          <img id="agentPortrait" class="agent-portrait" alt="" hidden>
+          <h2 id="agentName">Loading…</h2>
+        </div>
+        <div class="loadout-visuals">
+          <div class="loadout-visual">
+            <img id="heroSkinImage" alt="" hidden>
+            <span>PRIMARY SKIN</span>
+          </div>
+          <div class="loadout-visual">
+            <img id="heroSecondarySkinImage" alt="" hidden>
+            <span>PISTOL SKIN</span>
+          </div>
+          <div class="loadout-visual">
+            <img id="heroMeleeSkinImage" alt="" hidden>
+            <span>MELEE SKIN</span>
+          </div>
+          <div class="loadout-visual map-visual">
+            <img id="heroMapImage" alt="" hidden>
+            <span>FAVORITE MAP</span>
+          </div>
+        </div>
+        <div class="stats">
+          <div class="stat"><b id="heroWeaponOut">—</b><small id="heroSkinOut">Weapon Skin</small></div>
+          <div class="stat"><b id="heroMapOut">—</b><small>Favorite Map</small></div>
+          <div class="stat"><b id="heroRoleOut">—</b><small>Agent Role</small></div>
+        </div>
+      </div>
+    </div>
+    <section id="data">
+      <div class="sectionhead">
+        <div>
+          <div class="eyebrow">DATA EXPLORER</div>
+          <h2>Valorant Game Info!</h2>
+          <p>Live game data from the public Valorant API.</p>
+        </div>
+      </div>
+      <div class="tabs">
+        <button class="active" onclick="filter('all',this)">All</button>
+        <button onclick="filter('agent',this)">Agents</button>
+        <button onclick="filter('role',this)">Roles</button>
+        <button onclick="filter('weapon',this)">Weapons</button>
+        <button onclick="filter('skin',this)">Weapon Skins</button>
+        <button onclick="filter('map',this)">Maps</button>
+      </div>
+      <label class="search-box" for="explorerSearch">
+        <span>Search game data</span>
+        <input id="explorerSearch" type="search" placeholder="Search Agents, Roles, Weapons, Skins or Maps…" autocomplete="off">
+      </label>
+      <p id="dataStatus" class="data-status" role="status" aria-live="polite">Loading Valorant game data…</p>
+      <div id="cards"></div>
+      <div class="endpoint">
+        <span class="method">GET</span> https://valorant-api.com/v1/{agents|weapons|maps}<br>
+        <span style="color:#737d8b">// Roles are read from Agents; Weapon Skins are read from Weapon skin lists.</span>
+      </div>
+      <a class="documentation-card" href="https://openpublicapis.com/api/valorant-non-official?utm_source=chatgpt.com" target="_blank" rel="noopener noreferrer">
+        <span class="documentation-icon" aria-hidden="true">↗</span>
+        <span class="documentation-copy">
+          <span class="eyebrow">API DOCUMENTATION</span>
+          <strong>Read the Valorant API guide</strong>
+          <span>View endpoints, examples and API details on OpenPublicAPIs.</span>
+        </span>
+        <span class="documentation-arrow" aria-hidden="true">↗</span>
+      </a>
+    </section>
+  </main>
+  <main id="builder" style="display:none">
+    <section>
+      <div class="eyebrow">PERSONAL LOADOUT</div>
+      <h2 style="font-size:42px;margin:10px 0">Loadout Builder</h2>
+      <p style="color:var(--muted)">Pick your favorites and create a profile card worth showing off.</p>
+      <div class="builder">
+        <div class="form">
+          <h3>Choose your loadout</h3>
+          <button class="builder-picker" type="button" data-picker-category="agent" onclick="openPicker('agent')">
+            <span class="picker-icon">◈</span><span class="picker-copy"><small>AGENT</small><b data-picker-value="agent">Select an Agent</b></span><span class="picker-arrow">＋</span>
+          </button>
+          <div class="loadout-category">
+            <h4>Primary Weapon</h4>
+            <button class="builder-picker" type="button" data-picker-category="primaryWeapon" onclick="openPicker('primaryWeapon')">
+              <span class="picker-icon">⌁</span><span class="picker-copy"><small>PRIMARY WEAPON</small><b data-picker-value="primaryWeapon">Select a Primary Weapon</b></span><span class="picker-arrow">＋</span>
+            </button>
+            <button class="builder-picker" type="button" data-picker-category="primarySkin" onclick="openPicker('primarySkin')">
+              <span class="picker-icon">◇</span><span class="picker-copy"><small>PRIMARY WEAPON SKIN</small><b data-picker-value="primarySkin">Select a Primary Skin</b></span><span class="picker-arrow">＋</span>
+            </button>
+          </div>
+          <div class="loadout-category">
+            <h4>Secondary Weapon</h4>
+            <button class="builder-picker" type="button" data-picker-category="secondaryWeapon" onclick="openPicker('secondaryWeapon')">
+              <span class="picker-icon">⌁</span><span class="picker-copy"><small>SECONDARY WEAPON</small><b data-picker-value="secondaryWeapon">Select a Secondary Weapon</b></span><span class="picker-arrow">＋</span>
+            </button>
+            <button class="builder-picker" type="button" data-picker-category="secondarySkin" onclick="openPicker('secondarySkin')">
+              <span class="picker-icon">◇</span><span class="picker-copy"><small>SECONDARY WEAPON SKIN</small><b data-picker-value="secondarySkin">Select a Secondary Skin</b></span><span class="picker-arrow">＋</span>
+            </button>
+          </div>
+          <div class="loadout-category">
+            <h4>Melee</h4>
+            <button class="builder-picker" type="button" data-picker-category="meleeWeapon" onclick="openPicker('meleeWeapon')">
+              <span class="picker-icon">⌁</span><span class="picker-copy"><small>MELEE</small><b data-picker-value="meleeWeapon">Select a Melee Weapon</b></span><span class="picker-arrow">＋</span>
+            </button>
+            <button class="builder-picker" type="button" data-picker-category="meleeSkin" onclick="openPicker('meleeSkin')">
+              <span class="picker-icon">◇</span><span class="picker-copy"><small>MELEE SKIN</small><b data-picker-value="meleeSkin">Select a Melee Skin</b></span><span class="picker-arrow">＋</span>
+            </button>
+          </div>
+          <button class="builder-picker" type="button" data-picker-category="map" onclick="openPicker('map')">
+            <span class="picker-icon">▦</span><span class="picker-copy"><small>MAP</small><b data-picker-value="map">Select a Map</b></span><span class="picker-arrow">＋</span>
+          </button>
+        </div>
+        <div class="loadout">
+          <div class="eyebrow">YOUR LOADOUT</div>
+          <h3 id="builderAgent">Loadout</h3>
+          <div class="slot"><span>Agent</span><b id="builderAgentOut">—</b></div>
+          <div class="slot"><span>Role</span><b id="builderRoleOut">—</b></div>
+          <div class="slot"><span>Primary Weapon</span><b id="builderPrimaryWeaponOut">—</b></div>
+          <div class="slot"><span>Primary Skin</span><span class="loadout-slot-value"><img id="builderPrimarySkinImage" alt="" hidden><b id="builderPrimarySkinOut">—</b></span></div>
+          <div class="slot"><span>Secondary Weapon</span><b id="builderSecondaryWeaponOut">—</b></div>
+          <div class="slot"><span>Secondary Skin</span><span class="loadout-slot-value"><img id="builderSecondarySkinImage" alt="" hidden><b id="builderSecondarySkinOut">—</b></span></div>
+          <div class="slot"><span>Melee</span><b id="builderMeleeWeaponOut">—</b></div>
+          <div class="slot"><span>Melee Skin</span><span class="loadout-slot-value"><img id="builderMeleeSkinImage" alt="" hidden><b id="builderMeleeSkinOut">—</b></span></div>
+          <div class="slot"><span>Favorite Map</span><span class="loadout-slot-value"><img id="builderMapImage" alt="" hidden><b id="builderMapOut">—</b></span></div>
+          <div class="skin-total">
+            <span>Total selected skin price</span>
+            <strong id="loadoutSkinTotal">Calculating…</strong>
+            <small id="loadoutSkinTotalNote">Prices are estimates based on skin edition; the public API does not provide live per-skin store prices.</small>
+          </div>
+          <button class="cta" id="saveLoadoutButton" type="button">Save Loadout</button>
+      <p id="loadoutSaveStatus" class="data-status" role="status" aria-live="polite"></p>
+        </div>
+      </div>
+    </section>
+  </main>
+  <dialog id="pickerDialog" aria-labelledby="pickerTitle">
+    <div class="picker-dialog-content">
+      <button id="pickerClose" class="detail-close" type="button" aria-label="Close picker">×</button>
+      <div class="eyebrow">LOADOUT BUILDER</div>
+      <h2 id="pickerTitle">Choose an item</h2>
+      <label class="search-box" for="pickerSearch">
+        <span>Search <span id="pickerSearchCategory">items</span></span>
+        <input id="pickerSearch" type="search" placeholder="Type to search…" autocomplete="off">
+      </label>
+      <p id="pickerStatus" class="data-status" role="status" aria-live="polite"></p>
+      <div id="pickerItems"></div>
+    </div>
+  </dialog>
+  <dialog id="detailDialog" aria-labelledby="detailTitle">
+    <div class="detail-content">
+      <button id="detailClose" class="detail-close" type="button" aria-label="Close details">×</button>
+      <img id="detailImage" alt="" hidden>
+      <div class="eyebrow">VALORANT GAME DATA</div>
+      <h2 id="detailTitle"></h2>
+      <p id="detailDescription"></p>
+      <div id="detailFacts"></div>
+      <div id="detailAbilities"></div>
+    </div>
+  </dialog>
+  <footer>DATAFORGE // VALORANT DATA EXPLORER — DATA VIA VALORANT-API.COM</footer>
+</div>
+<script src="app.js"></script>
+</body>
+</html>
