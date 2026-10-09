@@ -120,24 +120,69 @@ function createCard(category, item) {
     }
   });
 
-  const icon = document.createElement('div');
-  icon.className = 'icon';
-  if (item.displayIcon || item.listViewIcon) {
-    const image = document.createElement('img');
-    image.src = item.displayIcon || item.listViewIcon;
-    image.alt = '';
-    image.loading = 'lazy';
-    icon.append(image);
+  if (category === 'map') {
+    card.classList.add('map-card');
+    card.append(createMapVisuals(item));
   } else {
-    icon.textContent = categories.find(([key]) => key === category)[1];
+    const icon = document.createElement('div');
+    icon.className = 'icon';
+    if (item.displayIcon || item.listViewIcon) {
+      const image = document.createElement('img');
+      image.src = item.displayIcon || item.listViewIcon;
+      image.alt = '';
+      image.loading = 'lazy';
+      icon.append(image);
+    } else {
+      icon.textContent = categories.find(([key]) => key === category)[1];
+    }
+    card.append(icon);
   }
 
   const title = document.createElement('h3');
   title.textContent = item.displayName;
   const description = document.createElement('p');
   description.textContent = getSummary(category, item);
-  card.append(icon, title, description);
+  card.append(title, description);
   return card;
+}
+
+function createMapVisuals(item) {
+  const visuals = document.createElement('div');
+  visuals.className = 'map-card-visuals';
+  const mapImage = item.splash || item.stylizedBackgroundImage || item.backgroundImage ||
+    item.listViewIcon || item.displayIcon;
+  const minimapImage = item.displayIcon;
+
+  for (const [label, imageUrl, alt, className] of [
+    ['MAP', mapImage, `${item.displayName} map artwork`, 'map-artwork'],
+    ['MINIMAP', minimapImage, `${item.displayName} minimap`, 'map-minimap']
+  ]) {
+    if (!imageUrl) continue;
+    const preview = document.createElement('div');
+    preview.className = `map-card-visual ${className}`;
+    const image = document.createElement('img');
+    image.src = imageUrl;
+    image.alt = alt;
+    image.loading = 'lazy';
+    const caption = document.createElement('span');
+    caption.className = 'map-visual-label';
+    caption.textContent = label;
+    preview.append(image, caption);
+    visuals.append(preview);
+  }
+  if (!minimapImage) {
+    const preview = document.createElement('div');
+    preview.className = 'map-card-visual map-minimap';
+    const caption = document.createElement('span');
+    caption.className = 'map-visual-label';
+    caption.textContent = 'MINIMAP';
+    const unavailable = document.createElement('span');
+    unavailable.className = 'map-minimap-unavailable';
+    unavailable.textContent = 'Not provided by API';
+    preview.append(caption, unavailable);
+    visuals.append(preview);
+  }
+  return visuals;
 }
 
 function getSummary(category, item) {
@@ -254,14 +299,23 @@ function showDetails(category, item) {
   const image = detailDialog.querySelector('#detailImage');
   const facts = detailDialog.querySelector('#detailFacts');
   const abilities = detailDialog.querySelector('#detailAbilities');
+  detailDialog.querySelector('.map-detail-visuals')?.remove();
   title.textContent = item.displayName;
   description.textContent = item.description || item.tacticalDescription || getSummary(category, item);
-  image.hidden = !(item.displayIcon || item.listViewIcon);
-  image.src = item.displayIcon || item.listViewIcon || '';
+  const detailImageUrl = category === 'map'
+    ? ''
+    : item.displayIcon || item.listViewIcon || '';
+  image.hidden = !detailImageUrl;
+  image.src = detailImageUrl;
   image.alt = item.displayName;
   facts.replaceChildren();
   abilities.replaceChildren();
   abilities.hidden = category !== 'agent';
+  if (category === 'map') {
+    const mapVisuals = createMapVisuals(item);
+    mapVisuals.classList.add('map-detail-visuals');
+    description.after(mapVisuals);
+  }
 
   const entries = category === 'agent'
     ? [['Role', item.role.displayName]]
@@ -309,13 +363,7 @@ function showDetails(category, item) {
       abilityTitle.textContent = `${ability.displayName} · ${ability.slot}`;
       const abilityDescription = document.createElement('p');
       abilityDescription.textContent = ability.description || 'No description available.';
-      const abilityCost = ability.cost ?? ability.price ?? ability.shopData?.cost;
-      const price = document.createElement('p');
-      price.className = 'ability-cost';
-      price.textContent = Number.isFinite(abilityCost)
-        ? `Price: ${abilityCost.toLocaleString()} credits`
-        : 'Price: Not provided by API';
-      content.append(abilityTitle, abilityDescription, price);
+      content.append(abilityTitle, abilityDescription);
       card.append(content);
       abilities.append(card);
     }
