@@ -72,9 +72,29 @@ function getSortPrice(category, item) {
   return price ? (price.min + price.max) / 2 : null;
 }
 
+function bubbleSortByName(items) {
+  const sorted = [...items];
+  for (let end = sorted.length - 1; end > 0; end--) {
+    let swapped = false;
+    for (let index = 0; index < end; index++) {
+      const currentName = String(sorted[index].displayName || '');
+      const nextName = String(sorted[index + 1].displayName || '');
+      if (currentName.localeCompare(nextName, 'en', { numeric: true, sensitivity: 'base' }) > 0) {
+        [sorted[index], sorted[index + 1]] = [sorted[index + 1], sorted[index]];
+        swapped = true;
+      }
+    }
+    if (!swapped) break;
+  }
+  return sorted;
+}
+
 function sortItems(items, category, sort) {
   const direction = sort.endsWith('-desc') ? -1 : 1;
   const sorted = [...items];
+  if (sort === 'name-asc' && ['agent', 'weapon', 'skin', 'map'].includes(category)) {
+    return bubbleSortByName(sorted);
+  }
   sorted.sort((first, second) => {
     if (sort.startsWith('release-')) {
       const firstDate = Date.parse(first.releaseDate);
