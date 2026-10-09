@@ -72,6 +72,10 @@
         <button onclick="filter('skin',this)">Weapon Skins</button>
         <button onclick="filter('map',this)">Maps</button>
       </div>
+      <label class="search-box sort-box" for="explorerSort">
+        <span>Sort by</span>
+        <select id="explorerSort"></select>
+      </label>
       <label class="search-box" for="explorerSearch">
         <span>Search game data</span>
         <input id="explorerSearch" type="search" placeholder="Search Agents, Roles, Weapons, Skins or Maps…" autocomplete="off">
@@ -166,6 +170,10 @@
       <label class="search-box" for="pickerSearch">
         <span>Search <span id="pickerSearchCategory">items</span></span>
         <input id="pickerSearch" type="search" placeholder="Type to search…" autocomplete="off">
+      </label>
+      <label class="search-box sort-box" for="pickerSort">
+        <span>Sort by</span>
+        <select id="pickerSort"></select>
       </label>
       <p id="pickerStatus" class="data-status" role="status" aria-live="polite"></p>
       <div id="pickerItems"></div>

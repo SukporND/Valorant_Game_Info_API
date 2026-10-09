@@ -33,6 +33,73 @@ let activeFilter = 'all';
 let searchTerm = '';
 let pickerCategory = 'agent';
 let pickerSearchTerm = '';
+let explorerSort = 'name-asc';
+let pickerSort = 'name-asc';
+
+function getSortOptions(category) {
+  const options = [
+    ['name-asc', 'Name (A–Z)'],
+    ['uuid-asc', 'UUID (A–Z)']
+  ];
+  if (category === 'agent') {
+    options.push(['release-asc', 'Release date (oldest first)'], ['release-desc', 'Release date (newest first)']);
+  }
+  if (category === 'weapon') {
+    options.push(['price-asc', 'Price (low to high)'], ['price-desc', 'Price (high to low)']);
+  }
+  if (category === 'skin') {
+    options.push(['price-asc', 'Estimated price (low to high)'], ['price-desc', 'Estimated price (high to low)']);
+  }
+  return options;
+}
+
+function updateSortControl(control, category, selectedSort) {
+  const select = document.getElementById(control === 'explorer' ? 'explorerSort' : 'pickerSort');
+  select.replaceChildren();
+  for (const [value, label] of getSortOptions(category)) {
+    const option = document.createElement('option');
+    option.value = value;
+    option.textContent = label;
+    select.append(option);
+  }
+  const availableSorts = getSortOptions(category).map(([value]) => value);
+  select.value = availableSorts.includes(selectedSort) ? selectedSort : 'name-asc';
+}
+
+function getSortPrice(category, item) {
+  if (category === 'weapon') return Number.isFinite(item.shopData?.cost) ? item.shopData.cost : null;
+  const price = getSkinPrice(item);
+  return price ? (price.min + price.max) / 2 : null;
+}
+
+function sortItems(items, category, sort) {
+  const direction = sort.endsWith('-desc') ? -1 : 1;
+  const sorted = [...items];
+  sorted.sort((first, second) => {
+    if (sort.startsWith('release-')) {
+      const firstDate = Date.parse(first.releaseDate);
+      const secondDate = Date.parse(second.releaseDate);
+      const firstHasDate = Number.isFinite(firstDate);
+      const secondHasDate = Number.isFinite(secondDate);
+      if (firstHasDate !== secondHasDate) return firstHasDate ? -1 : 1;
+      if (firstHasDate && firstDate !== secondDate) return (firstDate - secondDate) * direction;
+    } else if (sort.startsWith('price-')) {
+      const firstPrice = getSortPrice(category, first);
+      const secondPrice = getSortPrice(category, second);
+      if ((firstPrice !== null) !== (secondPrice !== null)) return firstPrice !== null ? -1 : 1;
+      if (firstPrice !== null && secondPrice !== null && firstPrice !== secondPrice) {
+        return (firstPrice - secondPrice) * direction;
+      }
+    } else {
+      const firstValue = sort === 'uuid-asc' ? first.uuid : first.displayName;
+      const secondValue = sort === 'uuid-asc' ? second.uuid : second.displayName;
+      const comparison = String(firstValue || '').localeCompare(String(secondValue || ''), 'en', { numeric: true, sensitivity: 'base' });
+      if (comparison) return comparison * direction;
+    }
+    return String(first.displayName || '').localeCompare(String(second.displayName || ''), 'en', { numeric: true, sensitivity: 'base' });
+  });
+  return sorted;
+}
 
 async function fetchResource(resource) {
   const response = await fetch(`${API_BASE}/${resource}?language=en-US`);
@@ -253,13 +320,20 @@ function renderCards() {
   let resultCount = 0;
   let displayedCount = 0;
   for (const [category, , categoryName] of selectedCategories) {
-    const matchingItems = resourceData[category].filter(item => matchesSearch(category, item));
+    const matchingItems = sortItems(
+      resourceData[category].filter(item => matchesSearch(category, item)),
+      category,
+      explorerSort
+    );
     resultCount += matchingItems.length;
     let items = matchingItems;
     if (category === 'skin' && activeFilter === 'all' && !searchTerm) {
-      items = resourceData.weapon.flatMap(weapon =>
-        matchingItems.filter(skin => skin.weaponName === weapon.displayName).slice(0, 4)
-      );
+      const skinsByWeapon = new Map();
+      for (const skin of matchingItems) {
+        if (!skinsByWeapon.has(skin.weaponName)) skinsByWeapon.set(skin.weaponName, []);
+        skinsByWeapon.get(skin.weaponName).push(skin);
+      }
+      items = [...skinsByWeapon.values()].flatMap(skins => skins.slice(0, 4));
     }
     displayedCount += items.length;
     if (!items.length) continue;
@@ -503,12 +577,12 @@ function renderPickerItems() {
       (selectedWeapon && item.weaponName !== selectedWeapon.displayName))) return false;
     return true;
   });
-  const items = sourceItems.filter(item => {
+  const items = sortItems(sourceItems.filter(item => {
     const searchableText = config.itemType === 'skin'
       ? `${item.displayName} ${item.weaponName}`
       : `${item.displayName} ${getSummary(config.itemType, item)}`;
     return searchableText.toLocaleLowerCase().includes(pickerSearchTerm);
-  });
+  }), config.itemType, pickerSort);
   container.replaceChildren();
   if (config.itemType === 'skin') {
     renderPickerSkinGroups(items, container);
@@ -536,6 +610,8 @@ function openPicker(category) {
   }
   pickerCategory = category;
   pickerSearchTerm = '';
+  pickerSort = 'name-asc';
+  updateSortControl('picker', config.itemType, pickerSort);
   document.getElementById('pickerTitle').textContent = `Choose ${config.label.replace(/s$/, '')}`;
   document.getElementById('pickerSearchCategory').textContent = config.label;
   document.getElementById('pickerSearch').value = '';
@@ -629,6 +705,8 @@ function updateLoadout() {
 
 function filter(type, button) {
   activeFilter = type;
+  explorerSort = 'name-asc';
+  updateSortControl('explorer', type, explorerSort);
   document.querySelectorAll('.tabs button').forEach(tab => tab.classList.remove('active'));
   button.classList.add('active');
   renderCards();
@@ -727,11 +805,20 @@ document.getElementById('pickerSearch').addEventListener('input', event => {
   pickerSearchTerm = event.target.value.trim().toLocaleLowerCase();
   renderPickerItems();
 });
+document.getElementById('pickerSort').addEventListener('change', event => {
+  pickerSort = event.target.value;
+  renderPickerItems();
+});
+document.getElementById('explorerSort').addEventListener('change', event => {
+  explorerSort = event.target.value;
+  renderCards();
+});
 document.getElementById('explorerSearch').addEventListener('input', event => {
   searchTerm = event.target.value.trim().toLocaleLowerCase();
   if (dataStatus.classList.contains('error')) return;
   renderCards();
 });
+updateSortControl('explorer', activeFilter, explorerSort);
 initialize();
 
 

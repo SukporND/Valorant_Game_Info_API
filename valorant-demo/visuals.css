@@ -5,6 +5,24 @@
   margin: -10px 0 10px;
 }
 
+.sort-box {
+  max-width: 320px;
+}
+
+.sort-box select {
+  width: 100%;
+  padding: 13px 15px;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  color: var(--text);
+  font: inherit;
+}
+
+.sort-box select:focus {
+  border-color: var(--red);
+  outline: 2px solid #ff465533;
+}
+
 .loadout-visual {
   position: relative;
   display: grid;
